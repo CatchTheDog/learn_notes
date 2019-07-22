@@ -1,4 +1,23 @@
 # Elasticsearch集群部署
+## 配置文件
+Elasticsearch有三个配置文件：
+- elasticsearch.yml 用于配置Elasticsearch
+- jvm.options 用于配置Elasticsearch JVM 设置
+- log4j.properties 用于配置Elasticsearch 日志记录
+
+这三个文件位于config目录中，默认位置如下：
+- 对于归档分发，config目录位置默认为 $ES_HOME/config,可通过ES_PATH_CONF 环境变量更改config目录位置,或者，您可以通过命令行或通过shell配置文件来export获取ES_PATH_CONF环境变量:
+```yml
+ES_PATH_CONF = /path/to/my/config./bin/elasticsearch
+```
+- 对于包分发，config目录位置默认为/etc/elasticsearch。config目录的位置也可以通过ES_PATH_CONF环境变量进行更改，但请注意，在shell中设置它是不够的。相反，此变量来自 /etc/default/elasticsearch（对于Debian软件包）和 /etc/sysconfig/elasticsearch（对于RPM软件包）。您需要相应地编辑ES_PATH_CONF=/etc/elasticsearch其中一个文件中的 条目以更改配置目录位置。
+
+
+
+
+
+
+
 ## 硬件
 * 内存
   > 排序和聚合很耗内存，不要64GB>=内存>不可小于8GB
@@ -61,6 +80,7 @@ discovery.zen.minimum_master_nodes: 2
 ```
 > 动态修改此项
 修改为永久生效，且较配置文件优先
+Elasticsearch只需要很少配置，可以使用Cluster update Settings API在正在运行的集群上更改配置。
 ```js
 PUT /_cluster/settings
 {
