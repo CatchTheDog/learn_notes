@@ -201,7 +201,37 @@ curl -X GET "localhost:9200/_mget" -H 'Content-Type: application/json' -d'
         * 磁盘进行 同步 — 所有在文件系统缓存中等待的写入都刷新到磁盘，以确保它们被写入物理文件。
    * 新的段被开启，让它包含的文档可见以被搜索。
    * 内存缓存被清空，等待接收新的文档。
-
+- refresh 写入和打开新段的操作被称为刷新；默认情况下每个分片会每秒自动刷新一次。可在写大量文档前先关闭自动刷新或者降低刷新频率，然后在写完之后再恢复刷新频率。
+```curl
+PUT /my_logs
+{
+  "settings": {
+    "refresh_interval": "30s" 
+  }
+}
+# 关闭刷新
+PUT /my_logs/_settings
+{ "refresh_interval": -1 } 
+```
+- flush 这个执行一个提交并且截断 translog 的行为在 Elasticsearch 被称作一次 flush 。 分片每30分钟被自动刷新（flush），或者在 translog 太大的时候也会刷新。在重启节点或关闭索引之前执行 flush 有益于你的索引。当 Elasticsearch 尝试恢复或重新打开一个索引， 它需要重放 translog 中所有的操作，所以如果日志越短，恢复越快。
+```curl
+POST /blogs/_flush 
+POST /_flush?wait_for_ongoing 
+```
+- translog 默认 translog 是每 5 秒被 fsync 刷新到硬盘， 或者在每次写请求完成之后执行(e.g. index, delete, update, bulk)。这个过程在主分片和复制分片都会发生。最终， 基本上，这意味着在整个请求被 fsync 到主分片和复制分片的translog之前，你的客户端不会得到一个 200 OK 响应。
+  - 但是对于一些大容量的偶尔丢失几秒数据问题也并不严重的集群，使用异步的 fsync 还是比较有益的。比如，写入的数据被缓存到内存中，再每5秒执行一次 fsync 。这个选项可以针对索引单独设置，并且可以动态进行修改。如果你决定使用异步 translog 的话，你需要 保证 在发生crash时，丢失掉 sync_interval 时间段的数据也无所谓。
+    ```curl
+    PUT /my_index/_settings
+    {
+        "index.translog.durability": "async",
+        "index.translog.sync_interval": "5s"
+    }
+    ```
+  - 如果你不确定这个行为的后果，最好是使用默认的参数（ "index.translog.durability": "request" ）来避免数据丢失。
+- optimize API用于强制将索引段数目合并到max_sum_segments参数指定的大小以提高搜索性能。
+  ```curl
+  POST /logstash-2014-10/_optimize?max_num_segments=1 
+  ```
 ### 分析与分析器
 分析包含以下过程：
 - 首先，将一块文本分成适合于倒排索引的独立的词条
