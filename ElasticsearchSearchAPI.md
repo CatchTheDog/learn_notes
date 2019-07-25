@@ -697,3 +697,26 @@ curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
 }
 '
 ```
+## Named Queries
+>每个filter和query都在最顶层接受一个参数<em>_name</em>;仅对bool查询有效。
+```sh
+curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "bool" : {
+            "should" : [
+                {"match" : { "name.first" : {"query" : "shay", "_name" : "first"} }},
+                {"match" : { "name.last" : {"query" : "banon", "_name" : "last"} }}
+            ],
+            "filter" : {
+                "terms" : {
+                    "name.last" : ["banon", "kimchy"],
+                    "_name" : "test"
+                }
+            }
+        }
+    }
+}
+'
+```
+## Inner hits
