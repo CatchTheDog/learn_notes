@@ -658,7 +658,6 @@ curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
 }
 '
 ```
-
 ## Version
 ```sh
 curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
@@ -670,7 +669,6 @@ curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
 }
 '
 ```
-
 ## Index Boost
 >当数据来自于多个索引时，可以通过<em>Index Boost</em>控制不同索引的数据的评分相对权重。
 ```sh
@@ -720,3 +718,356 @@ curl -X GET "localhost:9200/_search" -H 'Content-Type: application/json' -d'
 '
 ```
 ## Inner hits
+<em>inner_hits</em> 可以在<em>nested,has_child,has_parent query and filter</em>中使用。结构如下：
+```JSON
+"<query>" : {
+    "inner_hits" : {
+        <inner_hits_options>
+    }
+}
+```
+><em>inner_hits</em>选项：
+- from 分页参数
+- size 分页参数
+- sort 排序参数
+- name 名称，在一个查询内有多个inner_hits时非常有效，默认名称与查询类型有关，如has_child查询内，默认名称时 子节点名称；has_parent查询内，默认名称是父节点名称；在内嵌对象查询中，是内嵌查询路径名称。
+
+>inner_hits支持如下特性：
+- 高亮
+- explain
+- source filter
+- script fields
+- doc value fields
+- version 
+
+```sh
+curl -X PUT "localhost:9200/test" -H 'Content-Type: application/json' -d'
+{
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "comments": {
+          "type": "nested"
+        }
+      }
+    }
+  }
+}
+'
+curl -X PUT "localhost:9200/test/_doc/1?refresh" -H 'Content-Type: application/json' -d'
+{
+  "title": "Test title",
+  "comments": [
+    {
+      "author": "kimchy",
+      "text": "comment text"
+    },
+    {
+      "author": "nik9000",
+      "text": "words words words"
+    }
+  ]
+}
+'
+# 在嵌套查询结果中，inner_hits中 _nested中包含了内嵌文档在所有内嵌文档中的相对位置，所以，可以不用在inner_hits中显示嵌套文档的_source以节省消耗。可以从doc_value中获取字段值。
+curl -X POST "localhost:9200/test/_search" -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "nested": {
+      "path": "comments",
+      "query": {
+        "match": {"comments.text" : "words"}
+      },
+      "inner_hits": {
+        "_source" : false,
+        "docvalue_fields" : ["comments.text.keyword"]
+      }
+    }
+  }
+}
+'
+```
+
+### parent/child inner_hits
+>暂时省略
+
+# 字段折叠
+>根据指定字段值对查询结果进行合并。被用来合并的字段必须是单值字段且类型是keyword或者数字，并且doc_values需要开启。只对top hits生效而不会对聚合生效。
+```sh
+curl -X GET "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match": {
+            "message": "elasticsearch"
+        }
+    },
+    "collapse" : {
+        "field" : "user" 
+    },
+    "sort": ["likes"], 
+    "from": 10 
+}
+'
+curl -X GET "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match": {
+            "message": "elasticsearch"
+        }
+    },
+    "collapse" : {
+        "field" : "user", 
+        "inner_hits": [
+            {
+                "name": "most_liked",  
+                "size": 3,
+                "sort": ["likes"]
+            },
+            {
+                "name": "most_recent", 
+                "size": 3,
+                "sort": [{ "date": "asc" }]
+            }
+        ]
+    },
+    "sort": ["likes"]
+}
+'
+```
+>过多的分组和inner_hits会导致查询性能非常低，<em>max_concurrent_group_searches</em>参数用以控制在一个查询中允许的最大的并发查询数。默认值取决于数据节点的数据量和默认的线程池大小。
+
+>字段折叠不能够用在scroll/rescore/search_after中。
+
+## search_after
+>Elasticsearch中的分页：
+- from/size  深分页对索引性能影响很大，不建议在深分页时使用
+- scroll 建议在深分页时使用，数据时基于查询生成时索引快照，保持scroll需要消耗内存。不建议在实时搜索时使用。
+- search_after 基于前一页的查询结果最后一条记录生成下一页的查询条件
+    - 排序字段必须是具有在索引中具有唯一值的字段，否则会引起混乱。建议使用_id.
+    - 因为实时性，在上次查询和本次查询之间如果索引文档发生了变化，则本次查询结果可能前后不一致
+```sh
+# 首次查询
+curl -X GET "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+    "size": 10,
+    "query": {
+        "match" : {
+            "title" : "elasticsearch"
+        }
+    },
+    "sort": [
+        {"date": "asc"},
+        {"_id": "desc"}
+    ]
+}
+'
+# 后续查询
+curl -X GET "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+    "size": 10,
+    "query": {
+        "match" : {
+            "title" : "elasticsearch"
+        }
+    },
+    "search_after": [1463538857, "654323"],
+    "sort": [
+        {"date": "asc"},
+        {"_id": "desc"}
+    ]
+}
+'
+```
+## search template
+>查询模板，预先向Elasticsearch注册定义的查询模板；在使用时传入指定参数，由Elasticsearch自动渲染为查询JSON执行查询返回查询结果。
+- 预注册查询脚本
+  ```sh
+  curl -X POST "localhost:9200/_scripts/<templatename>" -H 'Content-Type: application/json' -d'
+    {
+        "script": {
+            "lang": "mustache",
+            "source": {
+                "query": {
+                    "match": {
+                        "title": "{{query_string}}"
+                    }
+                }
+            }
+        }
+    }
+    '
+  ```
+- 查看注册的模板
+  ```sh
+  curl -X GET "localhost:9200/_scripts/<templatename>"
+  ```
+- 删除注册的模板
+  ```sh
+  curl -X DELETE "localhost:9200/_scripts/<templatename>"
+  ```
+- 使用注册的模板
+  ```sh
+  curl -X GET "localhost:9200/_search/template" -H 'Content-Type: application/json' -d'
+    {
+        "id": "<templateName>", 
+        "params": {
+            "query_string": "search for these words"
+        },
+        "explain": true,
+        "profile": true
+    }
+    '
+  ```
+- 验证注册的模板渲染是否正确
+  ```sh
+  curl -X GET "localhost:9200/_render/template" -H 'Content-Type: application/json' -d'
+    {
+    "source": "{ \"query\": { \"terms\": {{#toJson}}statuses{{/toJson}} }}",
+    "params": {
+        "statuses" : {
+            "status": [ "pending", "published" ]
+        }
+    }
+    }
+    '
+  ```
+
+>Elasticsearch模板使用 Mustache templating 进行渲染。
+模板支持 默认值、转换数组为JSON数组、<b>条件渲染</b>、将数组元素拼接等特性。
+
+>条件编译 模板<b>必须</b>以字符串的格式传入。
+```sh
+# 条件渲染示意
+# 模板
+{
+  "query": {
+    "bool": {
+      "must": {
+        "match": {
+          "line": "{{text}}" 
+        }
+      },
+      "filter": {
+        {{#line_no}} 
+          "range": {
+            "line_no": {
+              {{#start}} 
+                "gte": "{{start}}" 
+                {{#end}},{{/end}} 
+              {{/start}} 
+              {{#end}} 
+                "lte": "{{end}}" 
+              {{/end}} 
+            }
+          }
+        {{/line_no}} 
+      }
+    }
+  }
+}
+# 查询参数
+{
+    "params": {
+        "text":      "words to search for",
+        "line_no": { 
+            "start": 10, 
+            "end":   20  
+        }
+    }
+}
+```
+
+## multi search template
+多查询模板支持执行在同一个_msearch/template查询中执行几个模板请求。格式如下：
+```sh
+header\n
+body\n
+header\n
+body\n
+```
+>header部分与Multi Search一致，支持index,search_type,preference和routing参数。
+>body部分支持行内、已经预存、文件模板。
+```sh
+$ cat requests
+{"index": "test"}
+{"source": {"query": {"match":  {"user" : "{{username}}" }}}, "params": {"username": "john"}} 
+{"source": {"query": {"{{query_type}}": {"name": "{{name}}" }}}, "params": {"query_type": "match_phrase_prefix", "name": "Smith"}}
+{"index": "_all"}
+{"id": "template_1", "params": {"query_string": "search for these words" }} 
+
+$ curl -H "Content-Type: application/x-ndjson" -XGET localhost:9200/_msearch/template --data-binary "@requests"; echo
+```
+
+## search shards API
+>用于获取执行一个查询请求时会使用到的索引和分片。请求时索引名称可以是用逗号分隔的索引名称列表。
+```sh
+curl -X GET "localhost:9200/twitter/_search_shards"
+curl -X GET "localhost:9200/twitter/_search_shards?routing=foo,baz"
+```
+>支持参数如下：
+- routing
+- preference
+- local
+
+## Suggesters
+>suggest用于提供与搜索词相似的关键词用于搜索提示。
+```sh
+curl -X POST "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+  "query" : {
+    "match": {
+      "message": "tring out Elasticsearch"
+    }
+  },
+  "suggest" : {
+    "text" : "trying out Elasticsearch",
+    "my-suggestion" : {
+      "term" : {
+        "field" : "message"
+      }
+    },
+    "my-suggest-2" : {
+        "text" : "zhenshi yige shanpao ya .",
+      "term" : {
+        "field" : "user"
+      }
+    }
+  }
+}
+'
+```
+### Term suggester
+><em>term suggester</em>基于<em>编辑距离</em>提供搜索词建议。term suggester 首先对提供的搜索文本进行分析，然后对分析产生的每个token都做出建议。在生成搜索词建议的过程中不会将查询请求中的query查询计入考量范围。换句话说，建议词是根据索引内所有文档给出的，而不是基于本次请求中query查询的结果内文档给出的。
+
+>关于<b>编辑距离</b>：
+>>编辑距离是针对两个字符串的差异程度的量化量测，量测方式是看至少需要多少次的处理才能将一个字符串编程另一个字符串。
+
+#### 通用的查询选项
+
+|选项|描述|
+|---|---|
+|text|搜索输入文本，必填；可全局提供，也可为每个suggester单独提供|
+|field|获取建议词的字段，必填；可全局提供，也可为每个suggester单独提供|
+|analyzer|搜索词分析器，默认情况下使用field search_analyzer|
+|size|每个搜索文本token提供的建议词最大个数|
+|sort|每个搜索文本建议词排序规则，有效值：score frequency|
+|suggest_mode|控制给出何种建议词，哪些搜索文本token需要给出建议,有效值：</br>missing:默认值，在搜索文本token在索引中不存在时才给出建议词 popular:给出比原始搜索文本在索引中出现频率高的建议词 always:给出所有与搜索文本匹配的建议词|
+
+#### term suggest专用选项
+
+|选项|描述|
+|---|---|
+|lowercase_terms|在对搜索文本分析后将token转换为小写|
+|max_edits|允许的建议词与搜索文本token最大的编辑距离。取值在1-2之间，默认是2|
+|prefix_length|候选词与搜索文本token一致前缀的最小字符数，默认值4|
+|shard_size|每个分片返回候选词的最大数目，默认值是<em>size</em>。为此选项提供一个比size大的值有助于提高对拼写异常矫正的精度，但是同时也会增加性能开销。|
+|max_inspections|用于乘以shard_size以提高拼写修正精度的因子，默认值是5；增大此值，拼写修正精度会提高，但同时性能开销增大|
+|min_doc_freq|候选词在索引中出现频率的阈值。默认值0f,如果此值大于1，<em>此处省略翻译</em>；会用当前分片文档频率替换此值。|
+|max_term_freq|搜索文本token在索引中出现频率的阈值,有效值为绝对值或者百分数，默认值0.01f.如果此值大于1，<em>此处省略翻译</em>；会用当前分片文档频率替换此值。|
+|string_distance|指定使用何种方式比较候选词之间的相似性，有以下有效值：</br>internal:默认值，高度优化过的damerau_levenshtein算法 damerau_levenshtein：damerau_levenshtein算法 levenshtein:levenshtein算法 jaro_winkler:jaro_winkler算法 ngram：ngram算法|
+
+
+### Phrase Suggester
+>term suggester 虽然针对用户输入文本中的每个token都依据编辑距离给出了候选建议，但是需要用户选择使用哪个建议词。phrase suggester 在term suggester添加了依据ngram-language 模型选择完整的修正短语(而不是像term suggester一样返回候选token)。
+
+>在使用phrase suggester时，需要获取建议词的字段需要配置特殊的mapping:
