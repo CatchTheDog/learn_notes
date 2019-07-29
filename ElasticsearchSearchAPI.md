@@ -1071,3 +1071,377 @@ curl -X POST "localhost:9200/twitter/_search" -H 'Content-Type: application/json
 >term suggester 虽然针对用户输入文本中的每个token都依据编辑距离给出了候选建议，但是需要用户选择使用哪个建议词。phrase suggester 在term suggester添加了依据ngram-language 模型选择完整的修正短语(而不是像term suggester一样返回候选token)。
 
 >在使用phrase suggester时，需要获取建议词的字段需要配置特殊的mapping:
+```sh
+curl -X PUT "localhost:9200/test" -H 'Content-Type: application/json' -d'
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "analysis": {
+        "analyzer": {
+          "trigram": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["standard", "shingle"]
+          },
+          "reverse": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["standard", "reverse"]
+          }
+        },
+        "filter": {
+          "shingle": {
+            "type": "shingle",
+            "min_shingle_size": 2,
+            "max_shingle_size": 3
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "trigram": {
+              "type": "text",
+              "analyzer": "trigram"
+            },
+            "reverse": {
+              "type": "text",
+              "analyzer": "reverse"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+'
+curl -X POST "localhost:9200/test/_doc?refresh=true" -H 'Content-Type: application/json' -d'
+{"title": "noble warriors"}
+'
+curl -X POST "localhost:9200/test/_doc?refresh=true" -H 'Content-Type: application/json' -d'
+{"title": "nobel prize"}
+'
+
+curl -X POST "localhost:9200/test/_search" -H 'Content-Type: application/json' -d'
+{
+  "suggest": {
+    "text": "noble prize",
+    "simple_phrase": {
+      "phrase": {
+        "field": "title.trigram",
+        "size": 1,
+        "gram_size": 3,
+        "direct_generator": [ {
+          "field": "title.trigram",
+          "suggest_mode": "always"
+        } ],
+        "highlight": {
+          "pre_tag": "<em>",
+          "post_tag": "</em>"
+        }
+      }
+    }
+  }
+}
+'
+```
+
+#### 基本参数
+
+|参数名|描述|
+|---|---|
+|field|必填，此字段作为候选词查找字段|
+|gram_size|n-gram分割在字段上生成的token最大字符长度；如果字段没有配置n-gram,则此值会被忽略；如果字段配置了n-gram而没有传入此参数，则会使用n-gram <em>max_shingle_size</em>|
+|real_word_error_likelihood||
+|confidence||
+|max_errors||
+|seperator||
+|size||
+|analyzer||
+|shard_size||
+|text||
+|hightlight||
+|collate||
+
+#### 平滑模型
+>>平滑：去除或者降低不相关数据(噪音数据)，增强重点数据的一种数据处理方式。
+<em>phrase suggester</em>支持多种平滑模型来平衡索引中不存在的token和在索引中出现的token.
+
+|模型|描述|
+|---|---|
+|stupid_backoff|默认模型|
+|laplace||
+|linear_interpolation||
+
+#### 候选词生成器(Candidate Generators)
+>><em>phrase suggester</em>使用候选词生成器为每个搜索文本中的词项产生可能的候选词列表。目前仅支持一种候选词生成器——直接生成器(Dierct Generators)
+
+##### 直接生成器
+>支持参数：
+
+|参数名|描述|
+|field||
+|size||
+|suggest_mode||
+|max_edits||
+|prefix_length||
+|min_word_length||
+|max_inspections||
+|min_doc_freq||
+|max_term_freq||
+|pre_filter||
+|post_filter||
+
+eg: 
+```sh
+curl -X POST "localhost:9200/_search" -H 'Content-Type: application/json' -d'
+{
+  "suggest": {
+    "text" : "obel prize",
+    "simple_phrase" : {
+      "phrase" : {
+        "field" : "title.trigram",
+        "size" : 1,
+        "direct_generator" : [ {
+          "field" : "title.trigram",
+          "suggest_mode" : "always"
+        }, {
+          "field" : "title.reverse",
+          "suggest_mode" : "always",
+          "pre_filter" : "reverse",
+          "post_filter" : "reverse"
+        } ]
+      }
+    }
+  }
+}
+'
+```
+### Completion Suggester
+><em>Completion Suggester</em> 提供自动补全和搜索即可见功能，不同于<em>term suggester</em>和<em>phrase suggester</em>的拼写纠正或者‘did-you-mean’功能，<em>Completion Suggester</em>的功能是引导用户至与他们输入最相关的结果，以提高搜索的精度。
+
+>理想情况下，自动补全功能应当在用户一输入搜索词时就能提供即时反馈；因此，补全功能使用了在内存中耗时构建的数据结构来对提高搜索时向用户实时提供反馈的速度。
+
+#### Mapping
+>为了能够使用补全提示功能，需要指定特殊的映射以支持快速自动补全。
+```sh
+curl -X PUT "localhost:9200/music" -H 'Content-Type: application/json' -d'
+{
+    "mappings": {
+        "_doc" : {
+            "properties" : {
+                "suggest" : {
+                    "type" : "completion"
+                },
+                "title" : {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}
+'
+```
+>映射支持如下参数：
+
+|参数|描述|
+|--|--|
+|analyzer|分析器，默认使用simple.|
+|search_analyzer|查询分析器，默认值是anlyzer|
+|preserve_separators|输入缩写时是否进行扩展提示。默认值true.比如输入foof,会提示 Foo Fighters|
+|preserve_position_increments||
+|max_input_length||
+
+#### Indexing
+eg:
+```sh
+curl -X PUT "localhost:9200/music/_doc/1?refresh" -H 'Content-Type: application/json' -d'
+{
+    "suggest" : [
+        {
+            "input": "Nevermind",
+            "weight" : 10
+        },
+        {
+            "input": "Nirvana",
+            "weight" : 3
+        }
+    ]
+}
+'
+```
+>支持参数：
+- input
+- weight 评分系数
+
+#### Querying
+```sh
+curl -X POST "localhost:9200/music/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "suggest": {
+        "song-suggest" : {
+            "prefix" : "nir", 
+            "completion" : { 
+                "field" : "suggest" 
+            }
+        }
+    }
+}
+'
+```
+##### fuzzy queries
+##### regex queries
+
+### Context Suggester
+><em>completion suggestor</em>对索引内所有文档都会做出统一的处理并按照这些处理结果进行提示。而<em>Contenxt Suggester</em>允许对参与提示候选词生成的文档进行筛选，且可以对特定的候选词进行评分修正。就比如百度虽然需要基于所有内容作出搜索词提示，但是也需要将广告位(搜索结果前几条)留给莆田系，在搜索结果的基础上做一些评分的定制化处理，就需要使用<em>Context Suggester</em>。
+
+
+### 获取suggester类型
+>在候选词查询中传入参数<em>typed_keys</em>，响应结果中节点名会变为<em>term#my-first-suggester</em>以提示使用suggester的类型。
+eg: 
+```sh
+curl -X POST "localhost:9200/_search?typed_keys" -H 'Content-Type: application/json' -d'
+{
+  "suggest": {
+    "text" : "some test mssage",
+    "my-first-suggester" : {
+      "term" : {
+        "field" : "message"
+      }
+    },
+    "my-second-suggester" : {
+      "phrase" : {
+        "field" : "message"
+      }
+    }
+  }
+}
+'
+
+# 响应
+{
+  "suggest": {
+    "term#my-first-suggester": [ 
+      {
+        "text": "some",
+        "offset": 0,
+        "length": 4,
+        "options": []
+      },
+      {
+        "text": "test",
+        "offset": 5,
+        "length": 4,
+        "options": []
+      },
+      {
+        "text": "mssage",
+        "offset": 10,
+        "length": 6,
+        "options": [
+          {
+            "text": "message",
+            "score": 0.8333333,
+            "freq": 4
+          }
+        ]
+      }
+    ],
+    "phrase#my-second-suggester": [ 
+      {
+        "text": "some test mssage",
+        "offset": 0,
+        "length": 16,
+        "options": [
+          {
+            "text": "some test message",
+            "score": 0.030227963
+          }
+        ]
+      }
+    ]
+  },
+  ...
+}
+```
+
+## Multi Search API
+><em>Multi Search API</em> 允许在一个查询中执行多个查询请求；请求体格式与bulk API的格式一致。
+><em>max_concurrent_searches</em> 参数用于控制msearch中查询的并发数量。默认值取决于数据节点数和默认的线程池大小。
+
+## Count API
+><em>Count API</em>允许获取满足查询条件的文档数，可以跨索引查询。
+```sh
+curl -X PUT "localhost:9200/twitter/_doc/1?refresh" -H 'Content-Type: application/json' -d'
+{
+    "user": "kimchy"
+}
+'
+curl -X GET "localhost:9200/twitter/_doc/_count?q=user:kimchy"
+curl -X GET "localhost:9200/twitter/_doc/_count" -H 'Content-Type: application/json' -d'
+{
+    "query" : {
+        "term" : { "user" : "kimchy" }
+    }
+}
+'
+```
+
+## Valid API
+><em>Valid API</em> 用于验证一个查询是否正确而不用去执行它。
+```sh
+curl -X GET "localhost:9200/twitter/_validate/query?q=user:foo?explain=true"
+```
+>参数：
+- explain 在验证失败时给出更多细节描述
+- rewrite 设置为true时，会显示更为详细的Luncene query执行情况
+- all_shards 设置为true时，省略。
+
+## Explain API
+>用于获取一次查询中文档评分的具体细节。
+```sh
+curl -X GET "localhost:9200/twitter/_doc/0/_explain" -H 'Content-Type: application/json' -d'
+{
+      "query" : {
+        "match" : { "message" : "elasticsearch" }
+      }
+}
+'
+```
+
+## profile API
+>用于查看一个查询在各个底层组件和各个阶段中的耗时情况，可用于对查询进行优化分析。
+```sh
+curl -X GET "localhost:9200/twitter/_search" -H 'Content-Type: application/json' -d'
+{
+  "profile": true,
+  "query" : {
+    "match" : { "message" : "some number" }
+  }
+}
+'
+```
+### Profing Queries
+>介绍Luncene执行查询的各个阶段的细节。
+#### query Section
+#### collectors Section
+#### rewrite Section
+### Profing Aggregations
+#### aggregations Section
+### 注意事项
+- 性能分析接口很耗时，不要在生产使用且不能和非性能分析接口的性能进行相比，它仅仅是一个问题诊断工具
+- 一些功能如高亮、搜索建议等暂不支持性能分析，它目前仍然是一个实验性的功能。
+- 性能分析接口是Luncene提供的且从未计划以这种方式提供使用，如果诸位发现异常，可以报告。
+
+
+### 字段权限接口
+>可通过此接口获取字段权限。
+
+### Ranking Evaluation API
+>用于对一系列查询结果的排序质量进行评价。实验性的功能，在未来有可能改进或者完全删除。
