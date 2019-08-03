@@ -241,3 +241,8 @@ zrangebyscore hackers -inf 1950
 (integer) 4
 ```
 >redis也可以对HLL数据结构求并集。
+
+## 其他重要的功能
+- 可以对集合内的所有key进行迭代遍历(scan)
+- 可在服务端使用Lua脚本来降低延迟
+- 使用主从模式
