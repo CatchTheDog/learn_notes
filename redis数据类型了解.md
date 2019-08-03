@@ -209,3 +209,35 @@ zrangebyscore hackers -inf 1950
 >位操作命令如下：
 - SETBIT
 - GETBIT
+- BITOP
+>对不同的字符串逐位运算，提供的操作有：AND,OR,XOR和NOT.
+- BITCOUNT
+>用于统计值是1的位的总数。
+- BITOPS
+>从串中查找第一个值是给定值(0/1)的位的位置。
+
+>注：前两种命令对单个bit操作，而后面三种命令对一组bit进行操作。最后两种命令可以对字符串的指定范围内的位进行操作。
+
+>bitmaps 的通用场景如下：
+- 各种实时分析
+- 提供高效的空间利用率和布尔信息
+
+>如果需要将一个bitmap存储在多个不同的key中，最简单的策略就是：
+- 每个key中存储M位
+- 可以以bit-number/M的方式生成key名称
+- 这样bitmap的第N位的就存放在名称为 N/M的key中，其位置就是 bit-number MOD M
+
+## 超重对数
+><em>HyperLogLogs</em>是一种用来对集合内唯一元素的个数进行估算的数据结构。
+对包含元素较多的集合内唯一元素个数进行统计是很消耗内存的操作。有很多以精度损失换内存的算法，redis采用的实现方式，误差在1%以内，且消耗内存大小是一个常数，并不会随着集合内元素个数的增加而增加，最多占用12K内存。
+
+>HLL API如下：
+- 可以使用<em>PFADD</em>向数据结构中添加元素
+- 可以使用<em>PFCOUNT</em>获取数据结构中添加的唯一元素的估算个数
+```sh
+> pfadd hll a b c d
+(integer) 1
+> pfcount hll
+(integer) 4
+```
+>redis也可以对HLL数据结构求并集。
