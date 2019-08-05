@@ -66,7 +66,7 @@ appendonly yes
 >建议使用 appendfsync everysec，既快又安全。appendfsync always 非常慢，但是它支持批量提交，如果使用并行写入，则可以尝试使用此种模式。
 
 ### 如果AOF 被截断了我该怎么办？
->在Redis写入AOF时系统崩溃或者存储AOF的目录没有容量了都是由可能发生的，在这种情况下，AOF最后写入的最新一分钟的命令可能只写了一部分(被截断了)。最新版本的Redis仍然会加载此AOF文件，忽略最后被节点的命令，在系统日志中会给出提示：
+>在Redis写入AOF时系统崩溃或者存储AOF的目录没有容量了都是有可能发生的，在这种情况下，AOF最后写入的最新一分钟的命令可能只写了一部分(被截断了)。最新版本的Redis仍然会加载此AOF文件，忽略最后被截断的命令，在系统日志中会给出提示：
 ```sh
 * Reading RDB preamble from AOF file...
 * Reading the remaining AOF tail...
