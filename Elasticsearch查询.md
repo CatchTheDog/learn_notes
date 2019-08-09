@@ -2,7 +2,7 @@
 ## 轻量级搜索，使用Query-string
 ```curl
 curl -X GET "http://localhost:9200/employee/_search?q=last_name:Smith +name:(mary john) +date:>2014-09-10 +(aggregations geo)"
-
+http://localhost:9200/tcr0081/_search?q=+Flag:1%20%20AND%20+ITCode2:1011885812
 GET /_search?sort=date:desc&sort=_score&q=search
 ```
 注：表达式中：+ 前缀表示必须与查询条件匹配。类似地， - 前缀表示一定不与查询条件匹配。没有 + 或者 - 的所有其他条件都是可选的——匹配的越多，文档就越相关。

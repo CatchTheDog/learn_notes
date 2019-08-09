@@ -1,0 +1,1 @@
+double q_1(float r, int n);
