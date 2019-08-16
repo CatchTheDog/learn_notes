@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="algorithm.c" />
     <ClCompile Include="exercisechatper3.c" />
+    <ClCompile Include="linkedlistself.c" />
     <ClCompile Include="max.c" />
     <ClCompile Include="sum.c" />
     <ClCompile Include="test.c" />
@@ -28,6 +29,7 @@
   <ItemGroup>
     <ClInclude Include="algorithm.h" />
     <ClInclude Include="exercisechapter3.h" />
+    <ClInclude Include="linkedlistself.h" />
     <ClInclude Include="max.h" />
     <ClInclude Include="sum.h" />
   </ItemGroup>

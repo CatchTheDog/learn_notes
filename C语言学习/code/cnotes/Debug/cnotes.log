@@ -1,12 +1,25 @@
 ﻿  test.c
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(81): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(100): warning C4476: "printf": 格式说明符中的类型字段字符“D”未知
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(188): warning C4047: “初始化”:“int”与“char [11]”的间接级别不同
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(186): warning C4101: “pay”: 未引用的局部变量
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(228): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“int *”
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(222): warning C4047: “初始化”:“int”与“int *”的间接级别不同
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(257): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“int *”
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(257): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 2 拥有了类型“int *”
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(257): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 3 拥有了类型“int *”
-C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(256): warning C4047: “初始化”:“int *”与“int (*)[3]”的间接级别不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(125): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(144): warning C4476: "printf": 格式说明符中的类型字段字符“D”未知
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(232): warning C4047: “初始化”:“int”与“char [11]”的间接级别不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(230): warning C4101: “pay”: 未引用的局部变量
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(272): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“int *”
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(266): warning C4047: “初始化”:“int”与“int *”的间接级别不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(301): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 1 拥有了类型“int *”
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(301): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 2 拥有了类型“int *”
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(301): warning C4477: “printf”: 格式字符串“%d”需要类型“int”的参数，但可变参数 3 拥有了类型“int *”
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(300): warning C4047: “初始化”:“int *”与“int (*)[3]”的间接级别不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(344): warning C4047: “函数”:“int *”与“int (*)[4]”的间接级别不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(344): warning C4024: “printArray”: 形参和实参 1 的类型不同
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(424): warning C4094: 无标记的“struct”未声明符号
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(470): warning C4013: “strcpy”未定义；假设外部返回 int
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(482): warning C4101: “e”: 未引用的局部变量
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(482): warning C4101: “f”: 未引用的局部变量
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(480): warning C4101: “c”: 未引用的局部变量
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(482): warning C4101: “d”: 未引用的局部变量
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(555): warning C4013: “strlen”未定义；假设外部返回 int
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(377): warning C4716: “printA”: 必须返回一个值
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(381): warning C4716: “printAB”: 必须返回一个值
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(388): warning C4716: “printAB1”: 必须返回一个值
+C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\test.c(384): warning C4716: “printA1”: 必须返回一个值
   cnotes.vcxproj -> C:\马俊强\文档材料\learn_notes\C语言学习\code\cnotes\Debug\cnotes.exe
