@@ -19,7 +19,7 @@ void stringchr(char a[], char c);
 /*
 ** 程序入口
 */
-int main(int argc, char* argv[]) {
+int main_4(int argc, char* argv[]) {
 
 	char a[50] = "C program.";				/* 第一字符数组要有足够空间用于容纳复制/拼接的第二个字符串 */
 	char b[  ] = "C & Pointer.";

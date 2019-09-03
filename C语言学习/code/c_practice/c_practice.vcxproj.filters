@@ -27,5 +27,67 @@
     <ClCompile Include="c_and_pointer_2.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="c_and_pointer_3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_4.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_5.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_6.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_7_b.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_7_a.h">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_9.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_10.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_11.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_12.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_15.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_15_b.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_17.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_18.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_19.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_21.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="c_and_pointer_22.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inventor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -20,9 +20,31 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="c_and_pointer_1.c" />
+    <ClCompile Include="c_and_pointer_10.c" />
+    <ClCompile Include="c_and_pointer_11.c" />
+    <ClCompile Include="c_and_pointer_12.c" />
+    <ClCompile Include="c_and_pointer_15.c" />
+    <ClCompile Include="c_and_pointer_15_b.c" />
+    <ClCompile Include="c_and_pointer_16.c" />
+    <ClCompile Include="c_and_pointer_17.c" />
+    <ClCompile Include="c_and_pointer_18.c" />
+    <ClCompile Include="c_and_pointer_19.c" />
     <ClCompile Include="c_and_pointer_2.c" />
+    <ClCompile Include="c_and_pointer_21.c" />
+    <ClCompile Include="c_and_pointer_22.c" />
+    <ClCompile Include="c_and_pointer_3.c" />
+    <ClCompile Include="c_and_pointer_4.c" />
+    <ClCompile Include="c_and_pointer_5.c" />
+    <ClCompile Include="c_and_pointer_6.c" />
+    <ClCompile Include="c_and_pointer_7_a.h" />
+    <ClCompile Include="c_and_pointer_7_b.c" />
+    <ClCompile Include="c_and_pointer_8.c" />
+    <ClCompile Include="c_and_pointer_9.c" />
     <ClCompile Include="c_program_by_thq.c" />
     <ClCompile Include="const_pointer_param_test.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inventor.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
